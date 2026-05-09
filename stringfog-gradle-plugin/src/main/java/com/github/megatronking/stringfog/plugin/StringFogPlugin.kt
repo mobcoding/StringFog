@@ -2,16 +2,12 @@ package com.github.megatronking.stringfog.plugin
 
 import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationScope
+import com.android.build.api.dsl.CommonExtension
 import com.android.build.api.variant.AndroidComponentsExtension
-import com.android.build.gradle.AppExtension
-import com.android.build.gradle.BaseExtension
-import com.android.build.gradle.LibraryExtension
 import groovy.xml.XmlParser
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.configurationcache.extensions.capitalized
-import java.io.File
 import java.io.FileInputStream
 import java.io.InputStreamReader
 
@@ -21,24 +17,19 @@ class StringFogPlugin : Plugin<Project> {
         private const val PLUGIN_NAME = "stringfog"
     }
 
-    private fun forEachVariant(
-        extension: BaseExtension,
-        action: (com.android.build.gradle.api.BaseVariant) -> Unit
-    ) {
-        when (extension) {
-            is AppExtension -> extension.applicationVariants.all(action)
-            is LibraryExtension -> {
-                extension.libraryVariants.all(action)
-            } else -> throw GradleException(
-                "StringFog plugin must be used with android app," +
-                        "library or feature plugin"
-            )
+    private fun String.asTaskSuffix(): String {
+        return replaceFirstChar { ch ->
+            if (ch.isLowerCase()) {
+                ch.titlecase()
+            } else {
+                ch.toString()
+            }
         }
     }
 
     override fun apply(project: Project) {
         project.extensions.create(PLUGIN_NAME, StringFogExtension::class.java)
-        val extension = project.extensions.findByType(BaseExtension::class.java)
+        val extension = project.extensions.findByType(CommonExtension::class.java)
             ?: throw GradleException("StringFog plugin must be used with android plugin")
 
         val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
@@ -90,22 +81,23 @@ class StringFogPlugin : Plugin<Project> {
                 FramesComputationMode.COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS
             )
 
-            // TODO This will not work on Gradle 9.0
-            forEachVariant(extension) {
-                val generateTaskName = "generateStringFog${it.name.capitalized()}"
-                if (project.getTasksByName(generateTaskName, true).isNotEmpty()) {
-                    return@forEachVariant
-                }
-                val stringfogDir = File(project.buildDir, "generated" +
-                        File.separatorChar + "source" + File.separatorChar + "stringFog" + File.separatorChar + it.name.capitalized().lowercase())
-                val provider = project.tasks.register(generateTaskName, SourceGeneratingTask::class.java) { task ->
-                    task.genDir.set(stringfogDir)
-                    task.applicationId.set(applicationId)
-                    task.implementation.set(stringfog.implementation)
-                    task.mode.set(stringfog.mode)
-                }
-                it.registerJavaGeneratingTask(provider, stringfogDir)
+            val generateTaskName = "generateStringFog${variant.name.asTaskSuffix()}"
+            val stringfogDir = project.layout.buildDirectory.dir(
+                "generated/source/stringFog/${variant.name}"
+            )
+            val provider = project.tasks.register(
+                generateTaskName,
+                SourceGeneratingTask::class.java
+            ) { task ->
+                task.genDir.set(stringfogDir)
+                task.applicationId.set(applicationId)
+                task.implementation.set(stringfog.implementation)
+                task.mode.set(stringfog.mode)
             }
+            variant.sources.java?.addGeneratedSourceDirectory(
+                provider,
+                SourceGeneratingTask::genDir
+            )
             // TODO Need a final task to write logs to file
 //            val printFile = File(project.buildDir, "outputs/mapping/${variant.name.lowercase()}/stringfog.txt")
 //            printFile.writeText(logs.joinToString("\n"))

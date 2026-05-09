@@ -7,8 +7,10 @@ dependencies {
     implementation project(':stringfog-interface')
 }
 
-sourceCompatibility = JavaVersion.VERSION_11
-targetCompatibility = JavaVersion.VERSION_11
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
 
 apply from: '../maven_local.gradle'
 
