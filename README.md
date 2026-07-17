@@ -38,11 +38,10 @@ decrypt: new byte[]{-113, 71...} => "This is a string!"
 StringFog和混淆完全不冲突，也不需要配置反混淆，实际上StringFog配上混淆效果会更好！
 
 ### 使用
-由于开发了gradle插件，所以在集成时非常简单，不会影响到打包的配置。插件已经上传到MavenCentral，直接引用依赖就可以。
-**jcenter已经废弃，3.0+版本取消发布**
+由于开发了gradle插件，所以在集成时非常简单，不会影响到打包的配置。本 fork 通过 JitPack 发布。
 
 ##### 1、在根目录build.gradle中引入插件依赖。
-Current fork release example uses JitPack and tag `v5.3.0-agp9`.
+Current fork release example uses JitPack and tag `v5.3.1-agp9`.
 
 ```groovy
 buildscript {
@@ -52,9 +51,9 @@ buildscript {
     }
     dependencies {
         ...
-        classpath 'com.github.zhoutianling.StringFog:gradle-plugin:v5.3.0-agp9'
+        classpath 'com.github.mobcoding.StringFog:gradle-plugin:v5.3.1-agp9'
         // 选用加解密算法库，默认实现了xor算法，也可以使用自己的加解密库。
-        classpath 'com.github.zhoutianling.StringFog:xor:v5.3.0-agp9'
+        classpath 'com.github.mobcoding.StringFog:xor:v5.3.1-agp9'
     }
 }
 ```
@@ -74,7 +73,9 @@ stringfog {
     packageName 'com.github.megatronking.stringfog.app'
     // 可选：加密开关，默认开启。
     enable true
-    // 可选：指定需加密的代码包路径，可配置多个，未指定将默认全部加密。
+    // 可选：指定需加密的代码包路径，可配置多个，未指定将默认加密当前模块的全部代码。
+    // 在最终 app 模块配置非空包名时，同包名下外部 AAR/JAR 的 class 也会被加密。
+    // 包名需精确，不能包含空字符串；资源、assets 和 so 文件不在处理范围内。
     fogPackages = ['com.xxx.xxx']
     // 可选（3.0版本新增）：指定密钥生成器，默认使用长度8的随机密钥（每个字符串均有不同随机密钥）,
     // 也可以指定一个固定的密钥：HardCodeKeyGenerator("This is a key")
@@ -95,7 +96,8 @@ configure<StringFogExtension> {
     implementation = "com.github.megatronking.stringfog.xor.StringFogImpl"
     // 可选：加密开关，默认开启。
     enable = true
-    // 可选：指定需加密的代码包路径，可配置多个，未指定将默认全部加密。
+    // 可选：指定需加密的代码包路径，可配置多个，未指定将默认加密当前模块的全部代码。
+    // 在最终 app 模块配置非空包名时，同包名下外部 AAR/JAR 的 class 也会被加密。
     // fogPackages = arrayOf("com.xxx.xxx")
     kg = com.github.megatronking.stringfog.plugin.kg.RandomKeyGenerator()
     // base64或者bytes
@@ -109,7 +111,7 @@ configure<StringFogExtension> {
 dependencies {
       ...
       // 这里要和上面选用的加解密算法库一致，用于运行时解密。
-      implementation 'com.github.zhoutianling.StringFog:xor:v5.3.0-agp9'
+      implementation 'com.github.mobcoding.StringFog:xor:v5.3.1-agp9'
 }
 ```
 
@@ -174,6 +176,10 @@ public final class StringFogImpl implements IStringFog {
 - 自定义加解密算法集成，参考[sample2](https://github.com/MegatronKing/StringFog-Sample2)
 
 ## 更新日志
+
+### Unreleased
+- 支持在最终 app 模块中通过 `fogPackages` 加密外部 AAR/JAR 的匹配 class。
+- 插件不再发布 AGP API 运行时依赖，避免污染消费工程的构建 classpath。
 
 ### v5.2.0
 - 从ASM7升级到ASM9。

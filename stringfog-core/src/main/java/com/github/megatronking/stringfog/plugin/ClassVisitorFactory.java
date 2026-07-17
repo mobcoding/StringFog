@@ -39,12 +39,16 @@ public final class ClassVisitorFactory {
     public static ClassVisitor create(IStringFog stringFogImpl, List<String> logs,
                                       String[] fogPackages, IKeyGenerator kg, String fogClassName,
                                       String className, StringFogMode mode, ClassVisitor cv) {
-        if (WhiteLists.inWhiteList(className) || !isInFogPackages(fogPackages, className)) {
+        if (!shouldInstrument(fogPackages, className)) {
             Log.v("StringFog ignore: " + className);
             return createEmpty(cv);
         }
         Log.v("StringFog execute: " + className);
         return new StringFogClassVisitor(stringFogImpl, logs, fogClassName, cv, kg, mode);
+    }
+
+    public static boolean shouldInstrument(String[] fogPackages, String className) {
+        return !WhiteLists.inWhiteList(className) && isInFogPackages(fogPackages, className);
     }
 
     private static ClassVisitor createEmpty(ClassVisitor cv) {

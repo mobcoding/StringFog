@@ -4,9 +4,9 @@ plugins {
 }
 
 dependencies {
-    implementation gradleApi()
-    implementation localGroovy()
-    implementation 'com.android.tools.build:gradle:9.0.0'
+    compileOnly gradleApi()
+    compileOnly localGroovy()
+    compileOnly 'com.android.tools.build:gradle-api:9.0.0'
     implementation project(':stringfog-core')
     implementation project(':stringfog-interface')
 }

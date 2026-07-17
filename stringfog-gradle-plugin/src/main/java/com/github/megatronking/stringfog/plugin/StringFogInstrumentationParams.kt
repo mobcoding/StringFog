@@ -2,6 +2,7 @@ package com.github.megatronking.stringfog.plugin
 
 import com.android.build.api.instrumentation.InstrumentationParameters
 import com.github.megatronking.stringfog.StringFogWrapper
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import java.lang.ref.WeakReference
@@ -13,6 +14,9 @@ abstract class StringFogInstrumentationParams : InstrumentationParameters {
 
     @get:Input
     abstract val className: Property<String>
+
+    @get:Input
+    abstract val fogPackages: ListProperty<String>
 }
 
 private class NonSerializableParams(
@@ -39,10 +43,12 @@ internal fun StringFogInstrumentationParams.setParameters(
     applicationId: String,
     extension: StringFogExtension,
     logs: MutableList<String>,
-    className: String
+    className: String,
+    fogPackages: List<String>
 ) {
     this.applicationId.set(applicationId)
     this.className.set(className)
+    this.fogPackages.set(fogPackages)
     extensionForApplicationId[applicationId] = WeakReference(extension)
     extensionNonSerializableParams[extension] = NonSerializableParams(
         logs = logs,
@@ -50,4 +56,5 @@ internal fun StringFogInstrumentationParams.setParameters(
     )
     logs.add("stringfog impl: " + extension.implementation)
     logs.add("stringfog mode: " + extension.mode)
+    logs.add("stringfog packages: " + fogPackages.joinToString())
 }
