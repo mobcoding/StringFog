@@ -41,7 +41,7 @@ StringFog和混淆完全不冲突，也不需要配置反混淆，实际上Strin
 由于开发了gradle插件，所以在集成时非常简单，不会影响到打包的配置。本 fork 通过 JitPack 发布。
 
 ##### 1、在根目录build.gradle中引入插件依赖。
-Current fork release example uses JitPack and tag `v5.3.2-agp9`.
+Current fork release example uses JitPack and tag `v5.3.2`.
 
 ```groovy
 buildscript {
@@ -51,9 +51,9 @@ buildscript {
     }
     dependencies {
         ...
-        classpath 'com.github.mobcoding.StringFog:gradle-plugin:v5.3.2-agp9'
+        classpath 'com.github.mobcoding.StringFog:gradle-plugin:v5.3.2'
         // 选用加解密算法库，默认实现了xor算法，也可以使用自己的加解密库。
-        classpath 'com.github.mobcoding.StringFog:xor:v5.3.2-agp9'
+        classpath 'com.github.mobcoding.StringFog:xor:v5.3.2'
     }
 }
 ```
@@ -111,7 +111,7 @@ configure<StringFogExtension> {
 dependencies {
       ...
       // 这里要和上面选用的加解密算法库一致，用于运行时解密。
-      implementation 'com.github.mobcoding.StringFog:xor:v5.3.2-agp9'
+      implementation 'com.github.mobcoding.StringFog:xor:v5.3.2'
 }
 ```
 
@@ -177,7 +177,7 @@ public final class StringFogImpl implements IStringFog {
 
 ## 更新日志
 
-### v5.3.2-agp9
+### v5.3.2
 - 支持在最终 app 模块中通过 `fogPackages` 加密外部 AAR/JAR 的匹配 class。
 - 插件不再发布 AGP API 运行时依赖，避免污染消费工程的构建 classpath。
 
