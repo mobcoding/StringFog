@@ -8,6 +8,9 @@ android {
     buildFeatures {
         buildConfig = true
     }
+    lint {
+        checkReleaseBuilds = false
+    }
     defaultConfig {
         applicationId = "com.github.megatronking.stringfog"
         minSdk = 24
