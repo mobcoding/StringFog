@@ -10,13 +10,14 @@
 - 完全Gradle自动化集成。
 - 不支持InstantRun。
 
-**一些提示**
-> 由于我目前主要精力在[Reqable](https://reqable.com)创业项目上，StringFog的Issue处理没那么及时，非常抱歉！
-虽然我已经很久不从事Android项目的开发，但是还是会尽力将StringFog一直维护下去，如果您发现了一些可以修复的问题，欢迎提交PR。
+**维护说明**
+> 本仓库基于 [MegatronKing/StringFog](https://github.com/MegatronKing/StringFog) 维护，保留原项目的 Apache-2.0 许可证和版权声明。
+
+当前 fork 提供基于 AGP 9 的实现，并支持在最终 app 模块中选择性加密外部 AAR/JAR 的 class。欢迎通过 Issue 或 PR 提交问题与改进。
 
 ### 原理
 
-![](https://github.com/MegatronKing/StringFog/blob/master/assets/flow.png)<br>
+![](https://github.com/mobcoding/StringFog/blob/master/assets/flow.png)<br>
 
 - 加密前：
 ```java
@@ -35,36 +36,55 @@ decrypt: new byte[]{-113, 71...} => "This is a string!"
 ```
 
 ### 混淆
-StringFog和混淆完全不冲突，也不需要配置反混淆，实际上StringFog配上混淆效果会更好！
+StringFog 与 R8/ProGuard 不冲突，也不需要为插件自动生成的解密类手动添加 `-keep` 规则。构建时插件会生成 `<应用包名>.StringFog`，加密后的字节码会直接引用它；混淆时 R8 会同步更新类定义和所有引用。
+
+不要手动创建、复制或删除这个生成类。若使用了自定义算法实现，仍需将实现类和其依赖作为应用运行时依赖保留在最终 app 中。
 
 ### 使用
-由于开发了gradle插件，所以在集成时非常简单，不会影响到打包的配置。本 fork 通过 JitPack 发布。
+由于开发了 Gradle 插件，所以在集成时非常简单，不会影响到打包的配置。本 fork 通过 JitPack 发布，当前版本为 `5.3.3`。
 
 ##### 1、在根目录build.gradle中引入插件依赖。
-Current fork release example uses JitPack and tag `v5.3.3`.
+JitPack 坐标中的版本号使用 `5.3.3`，不要写成 Git tag 形式的 `v5.3.3`。
 
 ```groovy
 buildscript {
     repositories {
+        google()
         mavenCentral()
         maven { url 'https://jitpack.io' }
     }
     dependencies {
         ...
-        classpath 'com.github.mobcoding.StringFog:gradle-plugin:v5.3.3'
+        classpath 'com.github.mobcoding.StringFog:gradle-plugin:5.3.3'
         // 选用加解密算法库，默认实现了xor算法，也可以使用自己的加解密库。
-        classpath 'com.github.mobcoding.StringFog:xor:v5.3.3'
+        classpath 'com.github.mobcoding.StringFog:xor:5.3.3'
+    }
+}
+```
+
+根工程使用 `build.gradle.kts` 时，等价配置如下：
+
+```kotlin
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        maven(url = "https://jitpack.io")
+    }
+    dependencies {
+        classpath("com.github.mobcoding.StringFog:gradle-plugin:5.3.3")
+        classpath("com.github.mobcoding.StringFog:xor:5.3.3")
     }
 }
 ```
 
 ##### 2、在app或lib的build.gradle中配置插件。
 ```groovy
-apply plugin: 'stringfog'
-
 // 导入RandomKeyGenerator类，如果使用HardCodeKeyGenerator，更换下类名
 import com.github.megatronking.stringfog.plugin.kg.RandomKeyGenerator
 import com.github.megatronking.stringfog.plugin.StringFogMode
+
+apply plugin: 'stringfog'
 
 stringfog {
     // 必要：加解密库的实现类路径，需和上面配置的加解密算法库一致。
@@ -73,21 +93,25 @@ stringfog {
     packageName 'com.github.megatronking.stringfog.app'
     // 可选：加密开关，默认开启。
     enable true
-    // 可选：指定需加密的代码包路径，可配置多个，未指定将默认加密当前模块的全部代码。
-    // 在最终 app 模块配置非空包名时，同包名下外部 AAR/JAR 的 class 也会被加密。
-    // 包名需精确，不能包含空字符串；资源、assets 和 so 文件不在处理范围内。
+    // 可选：指定需加密的代码包路径，可配置多个；未指定时默认加密当前模块的全部代码。
+    // 在最终 app 模块配置非空包名时，匹配包名下外部 AAR/JAR 的 class 也会被加密。
+    // 填写包名，不要带类名或末尾的 "."；资源、assets 和 so 文件不在处理范围内。
     fogPackages = ['com.xxx.xxx']
     // 可选（3.0版本新增）：指定密钥生成器，默认使用长度8的随机密钥（每个字符串均有不同随机密钥）,
     // 也可以指定一个固定的密钥：HardCodeKeyGenerator("This is a key")
     kg new RandomKeyGenerator()
-    // 可选（4.0版本新增）：用于控制字符串加密后在字节码中的存在形式, 默认为base64，
-    // 也可以使用text或者bytes
+    // 可选（4.0版本新增）：用于控制字符串加密后在字节码中的存在形式，默认为base64，
+    // 也可以使用bytes
     mode StringFogMode.base64
 }
 ```
 
-kts中配置参考
+模块使用 `build.gradle.kts` 时，等价配置如下：
 ```kotlin
+import com.github.megatronking.stringfog.plugin.StringFogExtension
+import com.github.megatronking.stringfog.plugin.StringFogMode
+import com.github.megatronking.stringfog.plugin.kg.RandomKeyGenerator
+
 // Use the buildscript classpath from the root project, then apply the plugin here.
 apply(plugin = "stringfog")
 
@@ -96,12 +120,12 @@ configure<StringFogExtension> {
     implementation = "com.github.megatronking.stringfog.xor.StringFogImpl"
     // 可选：加密开关，默认开启。
     enable = true
-    // 可选：指定需加密的代码包路径，可配置多个，未指定将默认加密当前模块的全部代码。
-    // 在最终 app 模块配置非空包名时，同包名下外部 AAR/JAR 的 class 也会被加密。
-    // fogPackages = arrayOf("com.xxx.xxx")
-    kg = com.github.megatronking.stringfog.plugin.kg.RandomKeyGenerator()
+    // 可选：指定需加密的代码包路径，可配置多个；未指定时默认加密当前模块的全部代码。
+    // 在最终 app 模块配置非空包名时，匹配包名下外部 AAR/JAR 的 class 也会被加密。
+    fogPackages = arrayOf("com.xxx.xxx")
+    kg = RandomKeyGenerator()
     // base64或者bytes
-    mode = com.github.megatronking.stringfog.plugin.StringFogMode.bytes
+    mode = StringFogMode.bytes
 }
 ```
 
@@ -111,27 +135,46 @@ configure<StringFogExtension> {
 dependencies {
       ...
       // 这里要和上面选用的加解密算法库一致，用于运行时解密。
-      implementation 'com.github.mobcoding.StringFog:xor:v5.3.3'
+      implementation 'com.github.mobcoding.StringFog:xor:5.3.3'
 }
 ```
 
-##### 注意事项
-从AGP 8.0开始，默认不生成BuildConfig，但是StringFog依赖此配置，请注意加上下面的配置。
+Kotlin DSL：
+
 ```kotlin
-android {
-    // 注意请加上此配置
-    buildFeatures {
-        buildConfig = true
-    }
-    ...
+dependencies {
+    implementation("com.github.mobcoding.StringFog:xor:5.3.3")
 }
 ```
+
+#### 加密外部 AAR/JAR
+在**最终 application 模块**中配置非空的 `fogPackages` 后，插件会处理依赖 AAR/JAR 中匹配包名的 `.class` 文件。例如，第三方 AAR 的实现包为 `com.example.secure`：
+
+```groovy
+stringfog {
+    implementation 'com.github.megatronking.stringfog.xor.StringFogImpl'
+    fogPackages = ['com.example.secure']
+}
+```
+
+- `fogPackages` 按包名边界匹配，可配置多个。`com.example.foo` 会匹配 `com.example.foo.*`，不会匹配 `com.example.foobar.*`；空字符串会在构建时直接报错。
+- 只会处理 `fogPackages` 选中的 class。未选中的依赖、资源、assets 和 native `.so` 不会被加密。
+- `fogPackages` 为空时，保持原有行为：仅处理当前模块的 class，不会处理外部 AAR/JAR。
+- Android library 和 dynamic-feature 模块始终只处理本模块 class；要加密外部依赖，请在最终 app 模块应用插件并配置 `fogPackages`。
+- 解密入口 `StringFog` 由插件在构建时自动生成。其包名依次取自 Manifest 的 `package`、Android `namespace`、`stringfog.packageName`。外部 AAR 被加密后会调用该入口，因此最终 app 必须保留上方的 xor（或自定义算法）运行时依赖。
+
+当前 `5.3.3` 基于 AGP `9.0.0` 发布，JitPack 构建使用 Gradle `9.5` 和 JDK `17`。使用 AGP 9 的工程应将 Gradle JDK 配置为 JDK 17。
+
+##### 注意事项
+StringFog `5.3.3` 不依赖 `BuildConfig`，无需仅为 StringFog 开启 `buildFeatures.buildConfig`。
 
 ### 扩展
 
 #### 注解反加密
 如果开发者有不需要自动加密的类，可以使用注解StringFogIgnore来忽略：
 ```java
+import com.github.megatronking.stringfog.annotation.StringFogIgnore;
+
 @StringFogIgnore
 public class Test {
     ...
@@ -172,13 +215,14 @@ public final class StringFogImpl implements IStringFog {
 加解密的字符串明文和暗文会自动生成mapping映射文件，位于outputs/mapping/stringfog.txt。
 
 ## 范例
-- 默认加解密算法集成，参考[sample1](https://github.com/MegatronKing/StringFog-Sample1)
-- 自定义加解密算法集成，参考[sample2](https://github.com/MegatronKing/StringFog-Sample2)
+- 默认加解密算法集成，可参考上游 [sample1](https://github.com/MegatronKing/StringFog-Sample1)；请将依赖坐标替换为本文的 JitPack 坐标。
+- 自定义加解密算法集成，可参考上游 [sample2](https://github.com/MegatronKing/StringFog-Sample2)；请将依赖坐标替换为本文的 JitPack 坐标。
 
 ## 更新日志
 
 ### v5.3.3
-- 支持在最终 app 模块中通过 `fogPackages` 加密外部 AAR/JAR 的匹配 class。
+- 支持在最终 app 模块中通过非空 `fogPackages` 加密外部 AAR/JAR 的匹配 class；未配置时保持仅加密当前模块的原有行为。
+- 升级为基于 AGP 9 Instrumentation API 的实现，library 模块保持仅处理本模块 class。
 - 插件不再发布 AGP API 运行时依赖，避免污染消费工程的构建 classpath。
 
 ### v5.2.0
