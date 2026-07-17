@@ -51,6 +51,10 @@ class StringFogPlugin : Plugin<Project> {
             if (!stringfog.enable) {
                 return@onVariants
             }
+            val fogPackages = stringfog.fogPackages.map(String::trim)
+            require(fogPackages.none(String::isEmpty)) {
+                "stringfog.fogPackages must not contain blank package names"
+            }
             var applicationId: String? = null
             // We must get the package name to generate <package name>.StringFog.java
             // Priority: AndroidManifest -> namespace -> stringfog.packageName
@@ -75,15 +79,22 @@ class StringFogPlugin : Plugin<Project> {
             }
 
             val logs = mutableListOf<String>()
+            // ALL includes library dependencies and is only supported by application modules.
+            val instrumentationScope = if (extension is AppExtension && fogPackages.isNotEmpty()) {
+                InstrumentationScope.ALL
+            } else {
+                InstrumentationScope.PROJECT
+            }
             variant.instrumentation.transformClassesWith(
                 StringFogTransform::class.java,
-                InstrumentationScope.PROJECT
+                instrumentationScope
             ) { params ->
                 params.setParameters(
                     applicationId,
                     stringfog,
                     logs,
-                    "$applicationId.${SourceGeneratingTask.FOG_CLASS_NAME}"
+                    "$applicationId.${SourceGeneratingTask.FOG_CLASS_NAME}",
+                    fogPackages
                 )
             }
             variant.instrumentation.setAsmFramesComputationMode(

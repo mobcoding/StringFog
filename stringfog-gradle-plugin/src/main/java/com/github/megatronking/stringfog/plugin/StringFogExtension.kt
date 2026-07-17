@@ -44,7 +44,9 @@ abstract class StringFogExtension {
     var debug: Boolean = false
 
     /**
-     * The java packages will be applied. Default is effect on all packages.
+     * The Java packages to encrypt. When configured in an application module, matching classes
+     * from AAR and JAR dependencies are also instrumented. Leave empty to process only project
+     * classes, preserving the original all-packages behavior.
      */
     var fogPackages : Array<String> = emptyArray()
 
