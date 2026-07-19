@@ -13,7 +13,7 @@
 **维护说明**
 > 本仓库基于 [MegatronKing/StringFog](https://github.com/MegatronKing/StringFog) 维护，保留原项目的 Apache-2.0 许可证和版权声明。
 
-当前 fork 提供基于 AGP 9 的实现，并支持在最终 app 模块中选择性加密外部 AAR/JAR 的 class。欢迎通过 Issue 或 PR 提交问题与改进。
+当前 fork 同时维护 AGP 8 和 AGP 9 兼容版本，并支持在最终 app 模块中选择性加密外部 AAR/JAR 的 class。欢迎通过 Issue 或 PR 提交问题与改进。
 
 ### 原理
 
@@ -41,10 +41,23 @@ StringFog 与 R8/ProGuard 不冲突，也不需要为插件自动生成的解密
 不要手动创建、复制或删除这个生成类。若使用了自定义算法实现，仍需将实现类和其依赖作为应用运行时依赖保留在最终 app 中。
 
 ### 使用
-由于开发了 Gradle 插件，所以在集成时非常简单，不会影响到打包的配置。本 fork 通过 JitPack 发布，当前版本为 `5.3.3`。
+由于开发了 Gradle 插件，所以在集成时非常简单，不会影响到打包的配置。本 fork 通过 JitPack 发布，最新版本为 `5.3.3`。
+
+#### 版本兼容性
+
+StringFog 版本必须与消费工程的 Android Gradle Plugin（AGP）版本匹配，不能只按最新版本升级：
+
+| 消费工程 AGP | StringFog 版本 | Gradle / JDK | 外部 AAR/JAR 加密 |
+|---|---|---|---|
+| AGP 8.x | `5.2.2` | Gradle 8.x / JDK 17 | 支持 |
+| AGP 9.x | `5.3.3` | Gradle 9.x / JDK 17 | 支持 |
+
+- `5.2.2` 是包含外部 AAR/JAR 加密能力的 AGP 8 兼容版本。
+- `5.3.3` 基于 AGP 9 API 发布，不应直接用于 AGP 8 工程。
+- `gradle-plugin` 与 `xor` 必须使用相同版本。下方示例以 AGP 9 的 `5.3.3` 为例；AGP 8 工程请将所有 `5.3.3` 统一替换为 `5.2.2`。
 
 ##### 1、在根目录build.gradle中引入插件依赖。
-JitPack 坐标中的版本号使用 `5.3.3`，不要写成 Git tag 形式的 `v5.3.3`。
+JitPack 坐标使用上表中与 AGP 匹配的版本号（`5.3.3` 或 `5.2.2`），不要添加 Git tag 的 `v` 前缀。
 
 ```groovy
 buildscript {
@@ -163,10 +176,11 @@ stringfog {
 - Android library 和 dynamic-feature 模块始终只处理本模块 class；要加密外部依赖，请在最终 app 模块应用插件并配置 `fogPackages`。
 - 解密入口 `StringFog` 由插件在构建时自动生成。其包名依次取自 Manifest 的 `package`、Android `namespace`、`stringfog.packageName`。外部 AAR 被加密后会调用该入口，因此最终 app 必须保留上方的 xor（或自定义算法）运行时依赖。
 
-当前 `5.3.3` 基于 AGP `9.0.0` 发布，JitPack 构建使用 Gradle `9.5` 和 JDK `17`。使用 AGP 9 的工程应将 Gradle JDK 配置为 JDK 17。
+`5.2.2` 基于 AGP `8.0.0` API 发布；`5.3.3` 基于 AGP `9.0.0` API 发布，JitPack 构建使用 Gradle `9.5` 和 JDK `17`。
 
 ##### 注意事项
-StringFog `5.3.3` 不依赖 `BuildConfig`，无需仅为 StringFog 开启 `buildFeatures.buildConfig`。
+- AGP 8 工程使用 StringFog `5.2.2` 时，需要开启 `android.buildFeatures.buildConfig = true`。
+- StringFog `5.3.3` 不依赖 `BuildConfig`，无需仅为 StringFog 开启该配置。
 
 ### 扩展
 
@@ -223,6 +237,10 @@ public final class StringFogImpl implements IStringFog {
 ### v5.3.3
 - 支持在最终 app 模块中通过非空 `fogPackages` 加密外部 AAR/JAR 的匹配 class；未配置时保持仅加密当前模块的原有行为。
 - 升级为基于 AGP 9 Instrumentation API 的实现，library 模块保持仅处理本模块 class。
+- 插件不再发布 AGP API 运行时依赖，避免污染消费工程的构建 classpath。
+
+### v5.2.2
+- 为 AGP 8 工程支持在最终 app 模块中通过非空 `fogPackages` 加密外部 AAR/JAR 的匹配 class。
 - 插件不再发布 AGP API 运行时依赖，避免污染消费工程的构建 classpath。
 
 ### v5.2.0
