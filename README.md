@@ -2,7 +2,7 @@
 # StringFog
 一款自动对dex/aar/jar文件中的字符串进行加密Android插件工具，正如名字所言，给字符串加上一层雾霭，使人难以窥视其真面目。
 
-[![JitPack](https://jitpack.io/v/mobcoding/StringFog.svg)](https://jitpack.io/#mobcoding/StringFog)
+[![JitPack](https://img.shields.io/jitpack/v/github/mobcoding/StringFog.svg?label=JitPack)](https://jitpack.io/#mobcoding/StringFog)
 [![License](https://img.shields.io/badge/license-Apache2.0-brightgreen)](LICENSE)
 [![AGP](https://img.shields.io/badge/AGP-8%20%2F%209-blue)](https://developer.android.com/build/releases/gradle-plugin)
 
