@@ -1,0 +1,4 @@
+interface:
+  display_name: "Android StringFog 集成"
+  short_description: "为外部 AAR 配置字符串加密并验证最终 Release 产物"
+  default_prompt: "Use $android-stringfog-integration to integrate StringFog for an external AAR."
