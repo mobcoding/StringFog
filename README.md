@@ -112,7 +112,7 @@ stringfog {
     packageName 'com.github.megatronking.stringfog.app'
     // 可选：加密开关，默认开启。
     enable true
-    // 可选：指定需加密的代码包路径，可配置多个；未指定时默认加密当前模块的全部代码。
+    // 必填：显式指定需加密的包根路径，不要依赖隐式默认范围。
     // 在最终 app 模块配置非空包名时，匹配包名下外部 AAR/JAR 的 class 也会被加密。
     // 填写包名，不要带类名或末尾的 "."；资源、assets 和 so 文件不在处理范围内。
     // A nonempty list is a shared allowlist for project and dependency classes.
@@ -141,7 +141,7 @@ configure<StringFogExtension> {
     implementation = "com.github.megatronking.stringfog.xor.StringFogImpl"
     // 可选：加密开关，默认开启。
     enable = true
-    // 可选：指定需加密的代码包路径，可配置多个；未指定时默认加密当前模块的全部代码。
+    // 必填：显式指定需加密的包根路径，不要依赖隐式默认范围。
     // 在最终 app 模块配置非空包名时，匹配包名下外部 AAR/JAR 的 class 也会被加密。
     // A nonempty list limits both project and dependency classes.
     // Include the application-source root as well as the AAR/JAR root.
@@ -182,10 +182,29 @@ stringfog {
 
 > Important: `fogPackages` is a shared allowlist for project and dependency classes. When encrypting an external AAR/JAR, include both the application-source root (for example, `com.example.app`) and the AAR/JAR root (for example, `com.example.secure`). Listing only the AAR/JAR root skips application-source classes.
 
+#### 多模块工程
+
+每个需要加密源码的 Android application、library 或 dynamic-feature 模块都必须应用并配置 StringFog，并在该模块中显式填写自身源码包根路径；不要依赖最终 app 模块的配置覆盖其他模块。最终 application 模块还必须额外填写需要加密的外部 AAR/JAR 包根路径。
+
+例如，源码包为 `com.example.feature` 的 library 模块需要单独配置：
+
+```groovy
+apply plugin: 'stringfog'
+
+stringfog {
+    implementation 'com.github.megatronking.stringfog.xor.StringFogImpl'
+    fogPackages = ['com.example.feature']
+}
+
+dependencies {
+    implementation 'com.github.mobcoding.StringFog:xor:5.3.3'
+}
+```
+
 - `fogPackages` 按包名边界匹配，可配置多个。`com.example.foo` 会匹配 `com.example.foo.*`，不会匹配 `com.example.foobar.*`；空字符串会在构建时直接报错。
 - 只会处理 `fogPackages` 选中的 class。未选中的依赖、资源、assets 和 native `.so` 不会被加密。
-- `fogPackages` 为空时，保持原有行为：仅处理当前模块的 class，不会处理外部 AAR/JAR。
-- Android library 和 dynamic-feature 模块始终只处理本模块 class；要加密外部依赖，请在最终 app 模块应用插件并配置 `fogPackages`。
+- 不要依赖 `fogPackages` 为空时的隐式处理范围；始终显式填写需要加密的源码包根路径。
+- Android library 和 dynamic-feature 模块不会继承最终 app 模块的配置。每个需要加密源码的模块都必须独立应用插件、声明 xor 运行时依赖并配置自身 `fogPackages`；要加密外部依赖，请在最终 app 模块额外配置对应包根路径。
 - 解密入口 `StringFog` 由插件在构建时自动生成。其包名依次取自 Manifest 的 `package`、Android `namespace`、`stringfog.packageName`。外部 AAR 被加密后会调用该入口，因此最终 app 必须保留上方的 xor（或自定义算法）运行时依赖。
 
 `5.2.2` 基于 AGP `8.0.0` API 发布；`5.3.3` 基于 AGP `9.0.0` API 发布，JitPack 构建使用 Gradle `9.5` 和 JDK `17`。

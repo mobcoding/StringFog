@@ -70,6 +70,8 @@ Use the existing project convention when it already resolves `stringfog`; do not
 
 `fogPackages` is one allowlist for both project and dependency classes. When encrypting an AAR/JAR, include the confirmed application-source roots and the confirmed AAR/JAR roots. A nonempty list containing only the AAR root skips application-source classes.
 
+For multi-module projects, apply and configure StringFog in every Android application, library, and dynamic-feature module whose source classes need encryption. Each module lists only its confirmed source roots; the final application module additionally lists the AAR/JAR roots it encrypts. Do not rely on an empty `fogPackages` default or on another module's configuration.
+
 ## Inspection Commands
 
 Use commands adapted to the supplied paths. On Windows, extract only the data required for inspection.
