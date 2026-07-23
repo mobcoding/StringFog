@@ -83,7 +83,7 @@ import java.util.List;
 
     @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-        mIgnoreClass = IGNORE_ANNOTATION.equals(desc);
+        mIgnoreClass |= IGNORE_ANNOTATION.equals(desc);
         return super.visitAnnotation(desc, visible);
     }
 
