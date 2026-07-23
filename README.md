@@ -62,6 +62,8 @@ StringFog 版本必须与消费工程的 Android Gradle Plugin（AGP）版本匹
 - `5.3.3` 基于 AGP 9 API 发布，不应直接用于 AGP 8 工程。
 - `gradle-plugin` 与 `xor` 必须使用相同版本。下方示例以 AGP 9 的 `5.3.3` 为例；AGP 8 工程请将所有 `5.3.3` 统一替换为 `5.2.2`。
 
+> **迁移要求：必须替换旧依赖库。** 接入本 fork 前，请删除工程中所有 `com.github.megatronking.stringfog:gradle-plugin` 和 `com.github.megatronking.stringfog:xor` 依赖，并统一替换为相同版本的 `com.github.mobcoding.StringFog:gradle-plugin:<version>` 与 `com.github.mobcoding.StringFog:xor:<version>`。不要让旧、新坐标同时存在。`com.github.megatronking.stringfog.xor.StringFogImpl` 是实现类的 Java 包名，保持不变，不是 Maven 依赖坐标。
+
 ##### 1、在根目录build.gradle中引入插件依赖。
 JitPack 坐标使用上表中与 AGP 匹配的版本号（`5.3.3` 或 `5.2.2`），不要添加 Git tag 的 `v` 前缀。
 
