@@ -53,7 +53,10 @@ plugins {
 configure<StringFogExtension> {
     implementation = "com.github.megatronking.stringfog.xor.StringFogImpl"
     enable = true
-    fogPackages = arrayOf("com.example.secure")
+    fogPackages = arrayOf(
+        "com.example.app",
+        "com.example.secure"
+    )
     kg = RandomKeyGenerator()
     mode = StringFogMode.bytes
 }
@@ -64,6 +67,8 @@ dependencies {
 ```
 
 Use the existing project convention when it already resolves `stringfog`; do not add a second plugin resolution path.
+
+`fogPackages` is one allowlist for both project and dependency classes. When encrypting an AAR/JAR, include the confirmed application-source roots and the confirmed AAR/JAR roots. A nonempty list containing only the AAR root skips application-source classes.
 
 ## Inspection Commands
 
@@ -86,5 +91,5 @@ Extract DEX files to a temporary directory, then perform a binary-safe scan. An 
 ## Failure Diagnosis
 
 - `NoClassDefFoundError` for `<application package>.StringFog`: verify the final app owns the plugin configuration and `xor` runtime dependency; do not add a hand-written replacement class.
-- AAR plaintext remains: verify the real AAR package, confirmed `fogPackages`, final app module placement, and AGP/StringFog compatibility.
+- AAR or application plaintext remains: verify the real AAR package, every confirmed application-source and AAR root in `fogPackages`, final app module placement, and AGP/StringFog compatibility.
 - KSP/Room variant failures after migration: remove old custom plugin code that places AGP API on a runtime classpath. Do not add `extendsFrom` processor-classpath patches as a substitute.

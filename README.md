@@ -115,7 +115,9 @@ stringfog {
     // 可选：指定需加密的代码包路径，可配置多个；未指定时默认加密当前模块的全部代码。
     // 在最终 app 模块配置非空包名时，匹配包名下外部 AAR/JAR 的 class 也会被加密。
     // 填写包名，不要带类名或末尾的 "."；资源、assets 和 so 文件不在处理范围内。
-    fogPackages = ['com.xxx.xxx']
+    // A nonempty list is a shared allowlist for project and dependency classes.
+    // To encrypt an AAR/JAR, list both the application-source root and the AAR/JAR root.
+    fogPackages = ['com.example.app', 'com.example.secure']
     // 可选（3.0版本新增）：指定密钥生成器，默认使用长度8的随机密钥（每个字符串均有不同随机密钥）,
     // 也可以指定一个固定的密钥：HardCodeKeyGenerator("This is a key")
     kg new RandomKeyGenerator()
@@ -141,7 +143,9 @@ configure<StringFogExtension> {
     enable = true
     // 可选：指定需加密的代码包路径，可配置多个；未指定时默认加密当前模块的全部代码。
     // 在最终 app 模块配置非空包名时，匹配包名下外部 AAR/JAR 的 class 也会被加密。
-    fogPackages = arrayOf("com.xxx.xxx")
+    // A nonempty list limits both project and dependency classes.
+    // Include the application-source root as well as the AAR/JAR root.
+    fogPackages = arrayOf("com.example.app", "com.example.secure")
     kg = RandomKeyGenerator()
     // base64或者bytes
     mode = StringFogMode.bytes
@@ -172,9 +176,11 @@ dependencies {
 ```groovy
 stringfog {
     implementation 'com.github.megatronking.stringfog.xor.StringFogImpl'
-    fogPackages = ['com.example.secure']
+    fogPackages = ['com.example.app', 'com.example.secure']
 }
 ```
+
+> Important: `fogPackages` is a shared allowlist for project and dependency classes. When encrypting an external AAR/JAR, include both the application-source root (for example, `com.example.app`) and the AAR/JAR root (for example, `com.example.secure`). Listing only the AAR/JAR root skips application-source classes.
 
 - `fogPackages` 按包名边界匹配，可配置多个。`com.example.foo` 会匹配 `com.example.foo.*`，不会匹配 `com.example.foobar.*`；空字符串会在构建时直接报错。
 - 只会处理 `fogPackages` 选中的 class。未选中的依赖、资源、assets 和 native `.so` 不会被加密。
