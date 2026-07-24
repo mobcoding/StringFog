@@ -14,6 +14,49 @@ Use the same version for:
 
 Do not add the `v` prefix to StringFog versions.
 
+## Mandatory Coordinate Migration
+
+Before integrating this fork, remove every legacy `com.github.megatronking.stringfog` Maven dependency. Replace the plugin and all algorithm/runtime dependencies together:
+
+```text
+com.github.megatronking.stringfog:gradle-plugin:<old-version>
+com.github.megatronking.stringfog:xor:<old-version>
+```
+
+with matching versions of:
+
+```text
+com.github.mobcoding.StringFog:gradle-plugin:<version>
+com.github.mobcoding.StringFog:xor:<version>
+```
+
+Do not keep old and new coordinates together. The implementation class remains `com.github.megatronking.stringfog.xor.StringFogImpl`; this is the class's Java package name, not its Maven group.
+
+For traditional `buildscript` integration, add the matching `xor` artifact to the root buildscript classpath because the plugin loads the implementation class during configuration. Also keep the same `xor` artifact in each configured Android module's `implementation` dependencies for runtime decryption.
+
+## Required XOR Dependencies
+
+Declare `xor` in both scopes. Neither dependency replaces the other. For an AGP 9 project using `5.3.3`, the root `build.gradle.kts` must include:
+
+```kotlin
+buildscript {
+    dependencies {
+        classpath("com.github.mobcoding.StringFog:gradle-plugin:5.3.3")
+        classpath("com.github.mobcoding.StringFog:xor:5.3.3")
+    }
+}
+```
+
+Every configured Android module must also include:
+
+```kotlin
+dependencies {
+    implementation("com.github.mobcoding.StringFog:xor:5.3.3")
+}
+```
+
+For AGP 8, replace both `5.3.3` values with `5.2.2`. Before configuring the extension, verify the root `classpath` entry exists; otherwise Gradle fails with `Stringfog implementation class not found`.
+
 ## Kotlin DSL Pattern
 
 Resolve the plugin marker to the JitPack implementation in `settings.gradle.kts`:
@@ -62,7 +105,8 @@ configure<StringFogExtension> {
 }
 
 dependencies {
-    implementation(libs.stringfog.xor)
+    // Required in addition to the root buildscript classpath above.
+    implementation("com.github.mobcoding.StringFog:xor:5.3.3")
 }
 ```
 
@@ -92,6 +136,7 @@ Extract DEX files to a temporary directory, then perform a binary-safe scan. An 
 
 ## Failure Diagnosis
 
+- `Stringfog implementation class not found`: add the matching `xor` artifact to the root buildscript classpath before configuring the extension. An app `implementation` dependency alone is insufficient.
 - `NoClassDefFoundError` for `<application package>.StringFog`: verify the final app owns the plugin configuration and `xor` runtime dependency; do not add a hand-written replacement class.
 - AAR or application plaintext remains: verify the real AAR package, every confirmed application-source and AAR root in `fogPackages`, final app module placement, and AGP/StringFog compatibility.
 - KSP/Room variant failures after migration: remove old custom plugin code that places AGP API on a runtime classpath. Do not add `extendsFrom` processor-classpath patches as a substitute.

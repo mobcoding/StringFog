@@ -27,7 +27,10 @@ Read [references/compatibility-and-verification.md](references/compatibility-and
    - Identify every Android application, library, and dynamic-feature module containing source classes to encrypt, then obtain confirmation for each module's source package roots.
 
 3. Configure the remote plugin conservatively.
+   - Before adding the new coordinates, remove every legacy `com.github.megatronking.stringfog` plugin and algorithm dependency. Do not retain old and new StringFog coordinates together.
+   - Use only matching `com.github.mobcoding.StringFog:gradle-plugin:<version>` and `com.github.mobcoding.StringFog:xor:<version>` coordinates. The implementation class name remains `com.github.megatronking.stringfog.xor.StringFogImpl`; it is a Java package name, not a Maven coordinate.
    - Use the compatibility version from the reference; keep `gradle-plugin` and `xor` on the same version.
+   - Treat the root `buildscript` classpath and the Android module's `implementation` dependency as two required `xor` dependencies. For AGP 9, the root Kotlin DSL must include `classpath("com.github.mobcoding.StringFog:xor:5.3.3")`; use the same AGP-compatible version in the app module's `implementation`. Do not proceed until both scopes are present: the plugin loads `StringFogImpl` during configuration and the app needs it at runtime.
    - Resolve plugin ID `stringfog` through `pluginManagement.resolutionStrategy` when using a version-catalog alias.
    - Add `com.github.mobcoding.StringFog:xor` as an `implementation` dependency of every configured module.
    - Apply and configure StringFog in every Android module whose source classes require encryption, with that module's confirmed source package roots in `fogPackages`.
@@ -42,12 +45,14 @@ Read [references/compatibility-and-verification.md](references/compatibility-and
 5. Build and verify the Release artifact.
    - Build the requested APK or AAB after a successful Gradle configuration check.
    - Compare known plaintext from the input AAR and every configured module's source with final DEX content. Confirm every selected package set survives and its known sensitive literals are absent.
-   - Confirm the final runtime classpath contains the matching `xor` artifact.
+   - Confirm the root buildscript classpath and final runtime classpath both contain the matching `xor` artifact. A module `implementation` dependency does not satisfy the plugin's configuration-time class loading requirement.
    - Treat R8-merged/decompiled final classes as output artifacts, not proof of an original AAR class boundary.
 
 ## Guardrails
 
 - `fogPackages` matches package boundaries. `com.example.foo` matches `com.example.foo.*`, not `com.example.foobar.*`.
+- Never mix `com.github.megatronking.stringfog` and `com.github.mobcoding.StringFog` Maven coordinates in one project. Migrate the plugin and every algorithm/runtime dependency together.
+- Never omit `classpath("com.github.mobcoding.StringFog:xor:<version>")` from traditional root `build.gradle.kts` integration, even when the app module already has the same `implementation` dependency.
 - Always configure the plugin and explicit source package roots in every Android module whose source classes need encryption. A nonempty `fogPackages` in the final app module additionally limits dependency instrumentation; include its source roots and every confirmed AAR/JAR root. Resources, assets, and native libraries are outside StringFog scope.
 - Empty strings and third-party static constants can remain visible in decompiled code. Diagnose against input AAR bytecode and final DEX, not visual consistency alone.
 - Preserve unrelated Gradle, KSP/Room, signing, and AabResGuard configuration.

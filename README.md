@@ -99,6 +99,8 @@ buildscript {
 }
 ```
 
+> **必须同时配置两个 `xor` 依赖作用域。** 即使 app 模块已经声明了 `implementation("com.github.mobcoding.StringFog:xor:5.3.3")`，根 `build.gradle.kts` 仍必须声明 `classpath("com.github.mobcoding.StringFog:xor:5.3.3")`。插件会在配置阶段加载 `StringFogImpl`，缺少 classpath 会报 `Stringfog implementation class not found`。AGP 8 工程请将两处 `5.3.3` 统一替换为 `5.2.2`。
+
 ##### 2、在app或lib的build.gradle中配置插件。
 ```groovy
 // 导入RandomKeyGenerator类，如果使用HardCodeKeyGenerator，更换下类名
