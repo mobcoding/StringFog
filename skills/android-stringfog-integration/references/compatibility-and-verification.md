@@ -57,6 +57,20 @@ dependencies {
 
 For AGP 8, replace both `5.3.3` values with `5.2.2`. Before configuring the extension, verify the root `classpath` entry exists; otherwise Gradle fails with `Stringfog implementation class not found`.
 
+## Required Kotlin String Concatenation Option
+
+In each Kotlin module whose source classes require StringFog encryption, add this module-level block to `build.gradle.kts` (outside `android {}`):
+
+```kotlin
+kotlin {
+    compilerOptions.freeCompilerArgs.add("-Xstring-concat=inline")
+}
+```
+
+Merge the option into an existing `kotlin` block without replacing other compiler arguments or adding duplicates. Apply it to every targeted Kotlin source module, including library and dynamic-feature modules, rather than only the final app. This forces inline string concatenation instead of the `invokedynamic` path, keeping concatenation literals on the bytecode path StringFog instruments. For external AARs, the option must be applied when compiling the producer module; adding it in the consuming app does not recompile AAR bytecode.
+
+Before accepting the integration, confirm the option is effective for the targeted Kotlin compilation tasks and include a retained string-concatenation literal in the final Release DEX plaintext scan.
+
 ## Kotlin DSL Pattern
 
 Resolve the plugin marker to the JitPack implementation in `settings.gradle.kts`:
@@ -91,6 +105,10 @@ import com.github.megatronking.stringfog.plugin.kg.RandomKeyGenerator
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.stringfog)
+}
+
+kotlin {
+    compilerOptions.freeCompilerArgs.add("-Xstring-concat=inline")
 }
 
 configure<StringFogExtension> {

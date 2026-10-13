@@ -36,6 +36,7 @@ Read [references/compatibility-and-verification.md](references/compatibility-and
    - Apply and configure StringFog in every Android module whose source classes require encryption, with that module's confirmed source package roots in `fogPackages`.
    - In the final application module, configure `StringFogExtension` with `StringFogImpl`, `enable = true`, `StringFogMode.bytes`, its confirmed source roots, and the confirmed AAR package roots in `fogPackages`.
    - For AGP 8, ensure `android.buildFeatures.buildConfig = true`.
+   - In every Kotlin module whose source classes require StringFog encryption, add `kotlin { compilerOptions.freeCompilerArgs.add("-Xstring-concat=inline") }` at module scope. Merge it into an existing `kotlin` block and preserve other compiler arguments. This keeps string concatenation on the inline bytecode path rather than `invokedynamic`; see the reference for the full Kotlin DSL example. An external AAR must be compiled with this option in its producer module; the consuming app cannot change its existing bytecode.
 
 4. Migrate legacy implementations only after the remote configuration resolves.
    - Remove obsolete local plugin JARs, custom AAR transform plugins, and buildSrc/build-logic code only when they are exclusively for the old StringFog path.
@@ -46,6 +47,7 @@ Read [references/compatibility-and-verification.md](references/compatibility-and
    - Build the requested APK or AAB after a successful Gradle configuration check.
    - Compare known plaintext from the input AAR and every configured module's source with final DEX content. Confirm every selected package set survives and its known sensitive literals are absent.
    - Confirm the root buildscript classpath and final runtime classpath both contain the matching `xor` artifact. A module `implementation` dependency does not satisfy the plugin's configuration-time class loading requirement.
+   - Verify `-Xstring-concat=inline` is effective for every targeted Kotlin module and include a literal used in string concatenation in the Release plaintext check.
    - Treat R8-merged/decompiled final classes as output artifacts, not proof of an original AAR class boundary.
 
 ## Guardrails
