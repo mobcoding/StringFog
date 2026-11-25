@@ -47,7 +47,7 @@ StringFog 与 R8/ProGuard 不冲突，也不需要为插件自动生成的解密
 不要手动创建、复制或删除这个生成类。若使用了自定义算法实现，仍需将实现类和其依赖作为应用运行时依赖保留在最终 app 中。
 
 ### 使用
-由于开发了 Gradle 插件，所以在集成时非常简单，不会影响到打包的配置。本 fork 通过 JitPack 发布，最新版本为 `v5.3.4`。
+由于开发了 Gradle 插件，所以在集成时非常简单，不会影响到打包的配置。本 fork 通过 JitPack 发布，最新版本为 `5.3.5`。
 
 #### 版本兼容性
 
@@ -56,16 +56,16 @@ StringFog 版本必须与消费工程的 Android Gradle Plugin（AGP）版本匹
 | 消费工程 AGP | StringFog 版本 | Gradle / JDK | 外部 AAR/JAR 加密 |
 |---|---|---|---|
 | AGP 8.x | `5.2.2` | Gradle 8.x / JDK 17 | 支持 |
-| AGP 9.x | `v5.3.4` | Gradle 9.x / JDK 17 | 支持 |
+| AGP 9.x | `5.3.5` | Gradle 9.x / JDK 17 | 支持 |
 
 - `5.2.2` 是包含外部 AAR/JAR 加密能力的 AGP 8 兼容版本。
-- `v5.3.4` 基于 AGP 9 API 发布，不应直接用于 AGP 8 工程。
-- `gradle-plugin` 与 `xor` 必须使用相同版本。下方示例以 AGP 9 的 `v5.3.4` 为例；AGP 8 工程请将所有 `v5.3.4` 统一替换为 `5.2.2`。
+- `5.3.5` 基于 AGP 9 API 发布，不应直接用于 AGP 8 工程。
+- `gradle-plugin` 与 `xor` 必须使用相同版本。下方示例以 AGP 9 的 `5.3.5` 为例；AGP 8 工程请将所有 `5.3.5` 统一替换为 `5.2.2`。
 
 > **迁移要求：必须替换旧依赖库。** 接入本 fork 前，请删除工程中所有 `com.github.megatronking.stringfog:gradle-plugin` 和 `com.github.megatronking.stringfog:xor` 依赖，并统一替换为相同版本的 `com.github.mobcoding.StringFog:gradle-plugin:<version>` 与 `com.github.mobcoding.StringFog:xor:<version>`。不要让旧、新坐标同时存在。`com.github.megatronking.stringfog.xor.StringFogImpl` 是实现类的 Java 包名，保持不变，不是 Maven 依赖坐标。
 
 ##### 1、在根目录build.gradle中引入插件依赖。
-JitPack 坐标使用上表中与 AGP 匹配的版本号。AGP 9 使用 `v5.3.4`，AGP 8 使用 `5.2.2`。
+JitPack 坐标使用上表中与 AGP 匹配的版本号。AGP 9 使用 `5.3.5`，AGP 8 使用 `5.2.2`。
 
 ```groovy
 buildscript {
@@ -76,9 +76,9 @@ buildscript {
     }
     dependencies {
         ...
-        classpath 'com.github.mobcoding.StringFog:gradle-plugin:v5.3.4'
+        classpath 'com.github.mobcoding.StringFog:gradle-plugin:5.3.5'
         // 选用加解密算法库，默认实现了xor算法，也可以使用自己的加解密库。
-        classpath 'com.github.mobcoding.StringFog:xor:v5.3.4'
+        classpath 'com.github.mobcoding.StringFog:xor:5.3.5'
     }
 }
 ```
@@ -93,13 +93,13 @@ buildscript {
         maven(url = "https://jitpack.io")
     }
     dependencies {
-        classpath("com.github.mobcoding.StringFog:gradle-plugin:v5.3.4")
-        classpath("com.github.mobcoding.StringFog:xor:v5.3.4")
+        classpath("com.github.mobcoding.StringFog:gradle-plugin:5.3.5")
+        classpath("com.github.mobcoding.StringFog:xor:5.3.5")
     }
 }
 ```
 
-> **必须同时配置两个 `xor` 依赖作用域。** 即使 app 模块已经声明了 `implementation("com.github.mobcoding.StringFog:xor:v5.3.4")`，根 `build.gradle.kts` 仍必须声明 `classpath("com.github.mobcoding.StringFog:xor:v5.3.4")`。插件会在 ASM 插桩阶段加载 `StringFogImpl`，缺少 classpath 会报 `Stringfog implementation class not found`。AGP 8 工程请将两处 `v5.3.4` 统一替换为 `5.2.2`。
+> **必须同时配置两个 `xor` 依赖作用域。** 即使 app 模块已经声明了 `implementation("com.github.mobcoding.StringFog:xor:5.3.5")`，根 `build.gradle.kts` 仍必须声明 `classpath("com.github.mobcoding.StringFog:xor:5.3.5")`。插件会在 ASM 插桩阶段加载 `StringFogImpl`，缺少 classpath 会报 `Stringfog implementation class not found`。AGP 8 工程请将两处 `5.3.5` 统一替换为 `5.2.2`。
 
 ##### 2、在app或lib的build.gradle中配置插件。
 ```groovy
@@ -162,7 +162,7 @@ configure<StringFogExtension> {
 dependencies {
       ...
       // 这里要和上面选用的加解密算法库一致，用于运行时解密。
-      implementation 'com.github.mobcoding.StringFog:xor:v5.3.4'
+      implementation 'com.github.mobcoding.StringFog:xor:5.3.5'
 }
 ```
 
@@ -170,7 +170,7 @@ Kotlin DSL：
 
 ```kotlin
 dependencies {
-    implementation("com.github.mobcoding.StringFog:xor:v5.3.4")
+    implementation("com.github.mobcoding.StringFog:xor:5.3.5")
 }
 ```
 
@@ -201,7 +201,7 @@ stringfog {
 }
 
 dependencies {
-    implementation 'com.github.mobcoding.StringFog:xor:v5.3.4'
+    implementation 'com.github.mobcoding.StringFog:xor:5.3.5'
 }
 ```
 
@@ -211,11 +211,11 @@ dependencies {
 - Android library 和 dynamic-feature 模块不会继承最终 app 模块的配置。每个需要加密源码的模块都必须独立应用插件、声明 xor 运行时依赖并配置自身 `fogPackages`；要加密外部依赖，请在最终 app 模块额外配置对应包根路径。
 - 解密入口 `StringFog` 由插件在构建时自动生成。其包名依次取自 Manifest 的 `package`、Android `namespace`、`stringfog.packageName`。外部 AAR 被加密后会调用该入口，因此最终 app 必须保留上方的 xor（或自定义算法）运行时依赖。
 
-`5.2.2` 基于 AGP `8.0.0` API 发布；`v5.3.4` 基于 AGP `9.0.0` API 发布，JitPack 构建使用 Gradle `9.5` 和 JDK `17`。
+`5.2.2` 基于 AGP `8.0.0` API 发布；`5.3.5` 基于 AGP `9.0.0` API 发布，JitPack 构建使用 Gradle `9.5` 和 JDK `17`。
 
 ##### 注意事项
 - AGP 8 工程使用 StringFog `5.2.2` 时，需要开启 `android.buildFeatures.buildConfig = true`。
-- StringFog `v5.3.4` 不依赖 `BuildConfig`，无需仅为 StringFog 开启该配置。
+- StringFog `5.3.5` 不依赖 `BuildConfig`，无需仅为 StringFog 开启该配置。
 
 ### 扩展
 
@@ -268,6 +268,10 @@ public final class StringFogImpl implements IStringFog {
 - 自定义加解密算法集成，可参考上游 [sample2](https://github.com/MegatronKing/StringFog-Sample2)；请将依赖坐标替换为本文的 JitPack 坐标。
 
 ## 更新日志
+
+### 5.3.5
+
+- 使用无 `v` 前缀的 JitPack 版本号重新发布配置缓存修复。
 
 ### v5.3.4
 

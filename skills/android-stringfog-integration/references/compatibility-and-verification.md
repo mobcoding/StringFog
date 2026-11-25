@@ -5,14 +5,14 @@
 | Consumer AGP | StringFog version | Additional requirement |
 |---|---:|---|
 | 8.x | `5.2.2` | Enable `android.buildFeatures.buildConfig = true`. |
-| 9.x | `v5.3.4` | No StringFog-specific BuildConfig requirement. |
+| 9.x | `5.3.5` | No StringFog-specific BuildConfig requirement. |
 
 Use the same version for:
 
 - `com.github.mobcoding.StringFog:gradle-plugin`
 - `com.github.mobcoding.StringFog:xor`
 
-Use the exact published JitPack versions in the table, including the `v` prefix for `v5.3.4`.
+Use the exact published JitPack versions in the table.
 
 ## Mandatory Coordinate Migration
 
@@ -36,13 +36,13 @@ For traditional `buildscript` integration, add the matching `xor` artifact to th
 
 ## Required XOR Dependencies
 
-Declare `xor` in both scopes. Neither dependency replaces the other. For an AGP 9 project using `v5.3.4`, the root `build.gradle.kts` must include:
+Declare `xor` in both scopes. Neither dependency replaces the other. For an AGP 9 project using `5.3.5`, the root `build.gradle.kts` must include:
 
 ```kotlin
 buildscript {
     dependencies {
-        classpath("com.github.mobcoding.StringFog:gradle-plugin:v5.3.4")
-        classpath("com.github.mobcoding.StringFog:xor:v5.3.4")
+        classpath("com.github.mobcoding.StringFog:gradle-plugin:5.3.5")
+        classpath("com.github.mobcoding.StringFog:xor:5.3.5")
     }
 }
 ```
@@ -51,11 +51,11 @@ Every configured Android module must also include:
 
 ```kotlin
 dependencies {
-    implementation("com.github.mobcoding.StringFog:xor:v5.3.4")
+    implementation("com.github.mobcoding.StringFog:xor:5.3.5")
 }
 ```
 
-For AGP 8, replace both `v5.3.4` values with `5.2.2`. Before configuring the extension, verify the root `classpath` entry exists; otherwise Gradle fails with `Stringfog implementation class not found`.
+For AGP 8, replace both `5.3.5` values with `5.2.2`. Before configuring the extension, verify the root `classpath` entry exists; otherwise Gradle fails with `Stringfog implementation class not found`.
 
 ## Required Kotlin String Concatenation Option
 
@@ -124,7 +124,7 @@ configure<StringFogExtension> {
 
 dependencies {
     // Required in addition to the root buildscript classpath above.
-    implementation("com.github.mobcoding.StringFog:xor:v5.3.4")
+    implementation("com.github.mobcoding.StringFog:xor:5.3.5")
 }
 ```
 
