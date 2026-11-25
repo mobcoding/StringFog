@@ -63,9 +63,8 @@ class StringFogPlugin : Plugin<Project> {
         val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
         androidComponents.onVariants { variant ->
             val stringfog = project.extensions.getByType(StringFogExtension::class.java)
-            if (stringfog.implementation.isNullOrEmpty()) {
-                throw IllegalArgumentException("Missing stringfog implementation config")
-            }
+            val implementationClass = stringfog.implementation
+            require(!implementationClass.isNullOrEmpty()) { "Missing stringfog implementation config" }
             if (!stringfog.enable) {
                 return@onVariants
             }
@@ -93,7 +92,7 @@ class StringFogPlugin : Plugin<Project> {
                 throw IllegalArgumentException("Unable to resolve applicationId")
             }
 
-            val logs = mutableListOf<String>()
+            val mode = stringfog.mode
             // ALL includes dependency classes and is only available to application modules.
             val instrumentationScope = if (
                 extension is ApplicationExtension && fogPackages.isNotEmpty()
@@ -106,13 +105,11 @@ class StringFogPlugin : Plugin<Project> {
                 StringFogTransform::class.java,
                 instrumentationScope
             ) { params ->
-                params.setParameters(
-                    applicationId,
-                    stringfog,
-                    logs,
-                    "$applicationId.${SourceGeneratingTask.FOG_CLASS_NAME}",
-                    fogPackages
-                )
+                params.className.set("$applicationId.${SourceGeneratingTask.FOG_CLASS_NAME}")
+                params.fogPackages.set(fogPackages)
+                params.implementationClass.set(implementationClass)
+                params.mode.set(mode)
+                params.setKeyGenerator(stringfog.kg)
             }
             variant.instrumentation.setAsmFramesComputationMode(
                 FramesComputationMode.COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS
@@ -128,8 +125,8 @@ class StringFogPlugin : Plugin<Project> {
             ) { task ->
                 task.genDir.set(stringfogDir)
                 task.applicationId.set(applicationId)
-                task.implementation.set(stringfog.implementation)
-                task.mode.set(stringfog.mode)
+                task.implementation.set(implementationClass)
+                task.mode.set(mode)
             }
             variant.sources.java?.addGeneratedSourceDirectory(
                 provider,

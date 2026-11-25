@@ -22,6 +22,10 @@ public class HardCodeKeyGenerator implements IKeyGenerator {
         mKey = key;
     }
 
+    public byte[] getKey() {
+        return mKey.clone();
+    }
+
     @Override
     public byte[] generate(String text) {
         return mKey;

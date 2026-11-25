@@ -26,6 +26,10 @@ public class RandomKeyGenerator implements IKeyGenerator {
         mSecureRandom = new SecureRandom();
     }
 
+    public int getLength() {
+        return mLength;
+    }
+
     @Override
     public byte[] generate(String text) {
         byte[] key = new byte[mLength];

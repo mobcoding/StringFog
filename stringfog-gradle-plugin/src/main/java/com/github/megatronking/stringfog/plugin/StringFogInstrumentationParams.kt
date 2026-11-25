@@ -1,60 +1,56 @@
 package com.github.megatronking.stringfog.plugin
 
 import com.android.build.api.instrumentation.InstrumentationParameters
-import com.github.megatronking.stringfog.StringFogWrapper
+import com.github.megatronking.stringfog.IKeyGenerator
+import com.github.megatronking.stringfog.plugin.kg.HardCodeKeyGenerator
+import com.github.megatronking.stringfog.plugin.kg.RandomKeyGenerator
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
-import java.lang.ref.WeakReference
-import java.util.WeakHashMap
+import org.gradle.api.tasks.Optional
+import java.io.Serializable
 
 abstract class StringFogInstrumentationParams : InstrumentationParameters {
-    @get:Input
-    abstract val applicationId: Property<String>
-
     @get:Input
     abstract val className: Property<String>
 
     @get:Input
     abstract val fogPackages: ListProperty<String>
-}
 
-private class NonSerializableParams(
-    val logs: MutableList<String>,
-    val implementation: StringFogWrapper
-)
+    @get:Input
+    abstract val implementationClass: Property<String>
 
-private val extensionForApplicationId = mutableMapOf<String, WeakReference<StringFogExtension>>()
-private val extensionNonSerializableParams = WeakHashMap<StringFogExtension, NonSerializableParams>()
+    @get:Input
+    abstract val mode: Property<StringFogMode>
 
-internal val StringFogInstrumentationParams.extension
-    get() = extensionForApplicationId[applicationId.get()]?.get()
-        ?: throw IllegalStateException("Extension has not been registered with setParameters")
+    @get:Input
+    @get:Optional
+    abstract val randomKeyLength: Property<Int>
 
-private val StringFogInstrumentationParams.nonSerializableParameters
-    get() = extension.let { extensionNonSerializableParams[it] }
-        ?: throw IllegalStateException("runtimeParameters have not been registered with setParameters")
+    @get:Input
+    @get:Optional
+    abstract val hardCodedKey: Property<ByteArray>
 
-internal val StringFogInstrumentationParams.logs get() = nonSerializableParameters.logs
+    @get:Input
+    @get:Optional
+    abstract val customKeyGenerator: Property<Serializable>
 
-internal val StringFogInstrumentationParams.implementation get() = nonSerializableParameters.implementation
+    internal fun setKeyGenerator(generator: IKeyGenerator) {
+        when (generator.javaClass) {
+            RandomKeyGenerator::class.java -> randomKeyLength.set((generator as RandomKeyGenerator).length)
+            HardCodeKeyGenerator::class.java -> hardCodedKey.set((generator as HardCodeKeyGenerator).key)
+            else -> {
+                require(generator is Serializable) {
+                    "Custom StringFog key generator ${generator.javaClass.name} must implement java.io.Serializable"
+                }
+                customKeyGenerator.set(generator)
+            }
+        }
+    }
 
-internal fun StringFogInstrumentationParams.setParameters(
-    applicationId: String,
-    extension: StringFogExtension,
-    logs: MutableList<String>,
-    className: String,
-    fogPackages: List<String>
-) {
-    this.applicationId.set(applicationId)
-    this.className.set(className)
-    this.fogPackages.set(fogPackages)
-    extensionForApplicationId[applicationId] = WeakReference(extension)
-    extensionNonSerializableParams[extension] = NonSerializableParams(
-        logs = logs,
-        implementation = StringFogWrapper(extension.implementation)
-    )
-    logs.add("stringfog impl: " + extension.implementation)
-    logs.add("stringfog mode: " + extension.mode)
-    logs.add("stringfog packages: " + fogPackages.joinToString())
+    internal fun createKeyGenerator(): IKeyGenerator = when {
+        randomKeyLength.isPresent -> RandomKeyGenerator(randomKeyLength.get())
+        hardCodedKey.isPresent -> HardCodeKeyGenerator(hardCodedKey.get().clone())
+        else -> customKeyGenerator.get() as IKeyGenerator
+    }
 }

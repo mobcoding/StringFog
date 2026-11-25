@@ -5,7 +5,7 @@
 | Consumer AGP | StringFog version | Additional requirement |
 |---|---:|---|
 | 8.x | `5.2.2` | Enable `android.buildFeatures.buildConfig = true`. |
-| 9.x | `5.3.3` | No StringFog-specific BuildConfig requirement. |
+| 9.x | `5.3.4` | No StringFog-specific BuildConfig requirement. |
 
 Use the same version for:
 
@@ -32,17 +32,17 @@ com.github.mobcoding.StringFog:xor:<version>
 
 Do not keep old and new coordinates together. The implementation class remains `com.github.megatronking.stringfog.xor.StringFogImpl`; this is the class's Java package name, not its Maven group.
 
-For traditional `buildscript` integration, add the matching `xor` artifact to the root buildscript classpath because the plugin loads the implementation class during configuration. Also keep the same `xor` artifact in each configured Android module's `implementation` dependencies for runtime decryption.
+For traditional `buildscript` integration, add the matching `xor` artifact to the root buildscript classpath because the plugin loads the implementation class during ASM instrumentation. Also keep the same `xor` artifact in each configured Android module's `implementation` dependencies for runtime decryption.
 
 ## Required XOR Dependencies
 
-Declare `xor` in both scopes. Neither dependency replaces the other. For an AGP 9 project using `5.3.3`, the root `build.gradle.kts` must include:
+Declare `xor` in both scopes. Neither dependency replaces the other. For an AGP 9 project using `5.3.4`, the root `build.gradle.kts` must include:
 
 ```kotlin
 buildscript {
     dependencies {
-        classpath("com.github.mobcoding.StringFog:gradle-plugin:5.3.3")
-        classpath("com.github.mobcoding.StringFog:xor:5.3.3")
+        classpath("com.github.mobcoding.StringFog:gradle-plugin:5.3.4")
+        classpath("com.github.mobcoding.StringFog:xor:5.3.4")
     }
 }
 ```
@@ -51,11 +51,11 @@ Every configured Android module must also include:
 
 ```kotlin
 dependencies {
-    implementation("com.github.mobcoding.StringFog:xor:5.3.3")
+    implementation("com.github.mobcoding.StringFog:xor:5.3.4")
 }
 ```
 
-For AGP 8, replace both `5.3.3` values with `5.2.2`. Before configuring the extension, verify the root `classpath` entry exists; otherwise Gradle fails with `Stringfog implementation class not found`.
+For AGP 8, replace both `5.3.4` values with `5.2.2`. Before configuring the extension, verify the root `classpath` entry exists; otherwise Gradle fails with `Stringfog implementation class not found`.
 
 ## Required Kotlin String Concatenation Option
 
@@ -124,7 +124,7 @@ configure<StringFogExtension> {
 
 dependencies {
     // Required in addition to the root buildscript classpath above.
-    implementation("com.github.mobcoding.StringFog:xor:5.3.3")
+    implementation("com.github.mobcoding.StringFog:xor:5.3.4")
 }
 ```
 
